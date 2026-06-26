@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: fbcommerce-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile.prod
+    plan: free
+    region: singapore
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: BOT_TOKEN
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "false"
+      - key: FRONTEND_URL
+        value: https://fbcommerce.vercel.app
+      - key: BACKEND_URL
+        value: https://fbcommerce-backend.onrender.com
+
+  - type: worker
+    name: fbcommerce-bot
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile.bot
+    plan: free
+    region: singapore
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: BOT_TOKEN
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "false"

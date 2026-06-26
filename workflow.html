@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>fbtiktokcommerce — Workflow</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f1f5f9; color: #1e293b; padding: 2rem; }
+  h1 { text-align: center; font-size: 1.75rem; margin-bottom: .25rem; color: #2563eb; }
+  .subtitle { text-align: center; color: #64748b; margin-bottom: 2rem; font-size: .9rem; }
+  .flow { display: flex; flex-direction: column; align-items: center; gap: 0; max-width: 900px; margin: 0 auto; }
+  .row { display: flex; align-items: center; gap: 1.5rem; position: relative; width: 100%; justify-content: center; flex-wrap: wrap; }
+  .card { background: white; border-radius: 1rem; padding: 1.25rem 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,.08); border: 1px solid #e2e8f0; width: 220px; text-align: center; position: relative; }
+  .card .icon { font-size: 1.75rem; margin-bottom: .4rem; }
+  .card h3 { font-size: .85rem; font-weight: 600; margin-bottom: .2rem; }
+  .card p { font-size: .72rem; color: #64748b; line-height: 1.3; }
+  .card .tag { position: absolute; top: -.4rem; right: -.4rem; font-size: .6rem; padding: 2px 8px; border-radius: 99px; font-weight: 600; color: white; }
+  .tag-seller { background: #8b5cf6; }
+  .tag-buyer { background: #2563eb; }
+  .tag-bot { background: #10b981; }
+  .tag-web { background: #f59e0b; }
+  .arrow-down { display: flex; align-items: center; justify-content: center; padding: .3rem 0; color: #94a3b8; font-size: 1.25rem; }
+  .arrow-right { display: none; }
+  .section { background: white; border-radius: 1rem; padding: 1.25rem; margin-top: 1.5rem; border: 1px solid #e2e8f0; }
+  .section h2 { font-size: 1rem; margin-bottom: .75rem; display: flex; align-items: center; gap: .5rem; }
+  .step-list { display: flex; flex-direction: column; gap: .5rem; }
+  .step { display: flex; align-items: flex-start; gap: .75rem; font-size: .82rem; }
+  .step-num { background: #e2e8f0; width: 22px; height: 22px; border-radius: 99px; display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+  .step-num.green { background: #10b981; color: white; }
+  .step-num.blue { background: #2563eb; color: white; }
+  .step-num.purple { background: #8b5cf6; color: white; }
+  .step-num.amber { background: #f59e0b; color: white; }
+  .step code { background: #f1f5f9; padding: 1px 5px; border-radius: 4px; font-size: .75rem; }
+  .divider { width: 2px; height: 24px; background: #cbd5e1; margin: 0 auto; }
+  .badge { display: inline-block; background: #e2e8f0; padding: 1px 8px; border-radius: 99px; font-size: .65rem; font-weight: 600; margin-left: 4px; }
+  .badge.purple { background: #ede9fe; color: #7c3aed; }
+  .badge.blue { background: #dbeafe; color: #2563eb; }
+  .badge.green { background: #d1fae5; color: #059669; }
+  .badge.amber { background: #fef3c7; color: #d97706; }
+  @media (min-width: 700px) {
+    .row { flex-wrap: nowrap; }
+    .arrow-down { display: none; }
+    .arrow-right { display: flex; align-items: center; padding: 0 .25rem; color: #94a3b8; font-size: 1.25rem; }
+  }
+  .connector { display: flex; align-items: center; justify-content: center; gap: 1rem; width: 100%; margin: .5rem 0; }
+  .connector span { font-size: .7rem; color: #94a3b8; background: #f1f5f9; padding: 2px 10px; border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<h1>🛍️ fbtiktokcommerce Workflow</h1>
+<p class="subtitle">How the platform connects Facebook/TikTok sellers with buyers via Telegram + Web</p>
+
+<!-- Phase 1: Seller onboarding -->
+<div class="section">
+  <h2>📌 Phase 1 — Seller Onboarding</h2>
+  <div class="step-list">
+    <div class="step"><span class="step-num purple">1</span> <span>Seller opens Telegram Bot → sends <code>/start</code></span> <span class="badge purple">Bot</span></div>
+    <div class="step"><span class="step-num purple">2</span> <span>Taps "Register as Seller" → enters business name, phone, description</span> <span class="badge purple">Bot</span></div>
+    <div class="step"><span class="step-num amber">3</span> <span>Seller logs into <b>Web Dashboard</b> → adds products (name, price, stock, category)</span> <span class="badge amber">Web</span></div>
+    <div class="step"><span class="step-num amber">4</span> <span>Seller shares their Telegram bot link on Facebook &amp; TikTok posts/livestreams</span> <span class="badge">Facebook/TikTok</span></div>
+  </div>
+</div>
+
+<div class="connector"><span>⬇️ Buyer discovers products ⬇️</span></div>
+
+<!-- Phase 2: Buyer Journey -->
+<div class="section">
+  <h2>📌 Phase 2 — Buyer Orders via Telegram</h2>
+  <div class="step-list">
+    <div class="step"><span class="step-num blue">1</span> <span>Buyer sees product on <b>Facebook</b> post or <b>TikTok</b> livestream</span> <span class="badge">FB/TikTok</span></div>
+    <div class="step"><span class="step-num blue">2</span> <span>Buyer taps seller's Telegram bot link → opens bot</span> <span class="badge blue">Bot</span></div>
+    <div class="step"><span class="step-num blue">3</span> <span>Buyer browses catalog → taps product → "Add to Cart 🛒"</span> <span class="badge blue">Bot</span></div>
+    <div class="step"><span class="step-num blue">4</span> <span>Buyer opens cart → taps "Checkout ✅"</span> <span class="badge blue">Bot</span></div>
+    <div class="step"><span class="step-num green">5</span> <span>Bot asks: Name → Phone → Address → Notes → <b>Order placed!</b></span> <span class="badge green">Bot</span></div>
+  </div>
+</div>
+
+<div class="connector"><span>⬇️ Seller fulfills ⬇️</span></div>
+
+<!-- Phase 3: Fulfillment -->
+<div class="section">
+  <h2>📌 Phase 3 — Seller Fulfills Order</h2>
+  <div class="step-list">
+    <div class="step"><span class="step-num amber">1</span> <span>Seller opens <b>Web Dashboard → Orders</b> — sees new order with buyer details</span> <span class="badge amber">Web</span></div>
+    <div class="step"><span class="step-num amber">2</span> <span>Seller clicks <b>"Mark as confirmed"</b> → calls buyer to confirm</span> <span class="badge amber">Web</span></div>
+    <div class="step"><span class="step-num amber">3</span> <span>Seller ships item → clicks <b>"Mark as shipped"</b></span> <span class="badge amber">Web</span></div>
+    <div class="step"><span class="step-num amber">4</span> <span>Buyer receives → Seller clicks <b>"Mark as delivered"</b></span> <span class="badge amber">Web</span></div>
+  </div>
+</div>
+
+<div class="connector"><span>⬇️ Buyer reviews ⬇️</span></div>
+
+<!-- Phase 4: Reviews -->
+<div class="section">
+  <h2>📌 Phase 4 — Trust &amp; Reviews</h2>
+  <div class="step-list">
+    <div class="step"><span class="step-num blue">1</span> <span>Buyer can leave a ⭐ rating &amp; review on the product (via bot or web)</span> <span class="badge blue">Bot</span> <span class="badge amber">Web</span></div>
+    <div class="step"><span class="step-num green">2</span> <span>Reviews build seller reputation → more buyer trust → more sales</span> <span class="badge green">Flywheel</span></div>
+  </div>
+</div>
+
+<br/>
+<hr style="border: none; border-top: 1px solid #e2e8f0; margin: 1rem 0;" />
+
+<div style="max-width: 900px; margin: 0 auto; text-align: center; font-size: .8rem; color: #94a3b8;">
+  <p>💡 <b>Key insight:</b> Facebook & TikTok are used for <b>discovery</b>. Telegram bot handles the <b>transaction</b>. Web dashboard handles <b>management</b>.</p>
+  <p style="margin-top: .25rem;">Zero fees. No app download needed. Works on any phone.</p>
+</div>
+
+</body>
+</html>
