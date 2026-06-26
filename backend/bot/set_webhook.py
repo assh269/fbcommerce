@@ -15,7 +15,7 @@ async def main():
         token=settings.bot_token,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
-    webhook_url = f"{settings.backend_url}/webhook"
+    webhook_url = f"{settings.backend_url}/api/webhook"
     result = await bot.set_webhook(url=webhook_url)
     print(f"Webhook set to {webhook_url}: {result}")
     info = await bot.get_webhook_info()

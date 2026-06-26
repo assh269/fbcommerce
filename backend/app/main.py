@@ -16,29 +16,27 @@ bot: Bot | None = None
 dp: Dispatcher | None = None
 
 
+def init_bot():
+    global bot, dp
+    if bot is not None:
+        return
+    bot = Bot(
+        token=settings.bot_token,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+    )
+    dp = Dispatcher()
+    dp.include_routers(
+        start.router, register.router, catalog.router, cart.router, bot_orders.router, bot_reviews.router,
+    )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global bot, dp
     try:
         await init_db()
     except Exception as e:
         print(f"Database init failed (non-fatal): {e}")
-    if settings.bot_token:
-        bot = Bot(
-            token=settings.bot_token,
-            default=DefaultBotProperties(parse_mode=ParseMode.HTML),
-        )
-        dp = Dispatcher()
-        dp.include_routers(
-            start.router, register.router, catalog.router, cart.router, bot_orders.router, bot_reviews.router,
-        )
-        webhook_url = f"{settings.backend_url}/api/webhook"
-        try:
-            await bot.set_webhook(url=webhook_url)
-        except Exception as e:
-            print(f"Webhook setup failed (non-fatal): {e}")
     yield
-    # Don't close bot session — it's reused across invocations on warm instances
 
 
 app = FastAPI(title="fbtiktokcommerce", version="0.1.0", lifespan=lifespan)
@@ -65,6 +63,10 @@ async def health():
 
 @app.post("/webhook")
 async def telegram_webhook(request: Request):
+    if not settings.bot_token:
+        return {"ok": False, "error": "Bot token not configured"}
+    if bot is None:
+        init_bot()
     if not bot or not dp:
         return {"ok": False, "error": "Bot not initialized"}
     try:
