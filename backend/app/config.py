@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings
 
 
@@ -12,7 +14,7 @@ class Settings(BaseSettings):
     wave_money_api_key: str = ""
 
     class Config:
-        env_file = ".env"
+        env_file = str(Path(__file__).parents[2] / ".env")
         extra = "ignore"
 
     def __init__(self, **kwargs):

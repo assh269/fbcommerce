@@ -127,14 +127,6 @@ async def place_order(message: Message, state: FSMContext, data: dict):
     user_id = message.from_user.id
     items = user_carts.get(user_id, [])
 
-    if not items:
-        await message.answer("Your cart is empty.")
-        await state.clear()
-        return
-
-    if not items:
-        return
-
     seller_id = items[0].get("seller_id")
     if not seller_id:
         async with httpx.AsyncClient() as client:

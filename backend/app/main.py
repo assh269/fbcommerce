@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import init_db
 from app.routers import categories, orders, products, reviews, sellers
-from bot.handlers import cart, catalog, orders as bot_orders, register, start
+from bot.handlers import cart, catalog, orders as bot_orders, register, reviews as bot_reviews, start
 
 bot: Bot | None = None
 dp: Dispatcher | None = None
@@ -19,7 +19,10 @@ dp: Dispatcher | None = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global bot, dp
-    await init_db()
+    try:
+        await init_db()
+    except Exception as e:
+        print(f"Database init failed (non-fatal): {e}")
     if settings.bot_token:
         bot = Bot(
             token=settings.bot_token,
@@ -27,10 +30,13 @@ async def lifespan(app: FastAPI):
         )
         dp = Dispatcher()
         dp.include_routers(
-            start.router, register.router, catalog.router, cart.router, bot_orders.router,
+            start.router, register.router, catalog.router, cart.router, bot_orders.router, bot_reviews.router,
         )
         webhook_url = f"{settings.backend_url}/api/webhook"
-        await bot.set_webhook(url=webhook_url)
+        try:
+            await bot.set_webhook(url=webhook_url)
+        except Exception as e:
+            print(f"Webhook setup failed (non-fatal): {e}")
     yield
     # Don't close bot session — it's reused across invocations on warm instances
 

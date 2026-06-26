@@ -6,7 +6,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
 from app.config import settings
-from bot.handlers import cart, catalog, orders, register, start
+from bot.handlers import cart, catalog, orders, register, reviews, start
 
 logging.basicConfig(level=logging.INFO)
 
@@ -24,6 +24,7 @@ async def main():
         catalog.router,
         cart.router,
         orders.router,
+        reviews.router,
     )
 
     await bot.delete_webhook(drop_pending_updates=True)

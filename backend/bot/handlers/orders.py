@@ -27,14 +27,50 @@ async def my_orders(callback: CallbackQuery):
         return
 
     orders = resp.json()
-    lines = ["<b>📋 Your Orders</b>\n"]
+    builder = InlineKeyboardBuilder()
     for o in orders[:5]:
-        lines.append(
-            f"🆔 {o['id'][:8]}... | {o['total']:,.0f} MMK | <b>{o['status']}</b>"
-        )
+        order_label = f"🆔 {o['id'][:8]}... | {o['total']:,.0f} MMK | {o['status']}"
+        builder.button(text=order_label, callback_data=f"order_{o['id']}")
+    builder.button(text="🔙 Back", callback_data="back_main")
+    builder.adjust(1)
+
+    await callback.message.edit_text(
+        "<b>📋 Your Orders</b>\n\nTap an order to view details or leave a review:",
+        reply_markup=builder.as_markup(),
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("order_"))
+async def order_detail(callback: CallbackQuery):
+    order_id = callback.data.replace("order_", "")
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(f"{settings.backend_url}/orders/{order_id}")
+
+    if resp.status_code != 200:
+        await callback.answer("Order not found", show_alert=True)
+        return
+
+    o = resp.json()
+    lines = [
+        f"<b>Order Details</b>\n",
+        f"🆔 {o['id'][:8]}...",
+        f"💰 {o['total']:,.0f} MMK",
+        f"📌 <b>{o['status']}</b>",
+        f"👤 {o.get('buyer_name', 'N/A')}",
+        f"📞 {o.get('buyer_phone', 'N/A')}",
+        f"📍 {o.get('shipping_address', 'N/A')}",
+    ]
+    if o.get("note"):
+        lines.append(f"📝 {o['note']}")
 
     builder = InlineKeyboardBuilder()
-    builder.button(text="🔙 Back", callback_data="back_main")
+    for item in (o.get("items") or [])[:1]:
+        pid = item["product_id"]
+        builder.button(text="Leave Review ⭐", callback_data=f"review_{pid}_{order_id}")
+    builder.button(text="🔙 Back", callback_data="my_orders")
+    builder.adjust(1)
+
     await callback.message.edit_text("\n".join(lines), reply_markup=builder.as_markup())
     await callback.answer()
 
