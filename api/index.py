@@ -24,6 +24,25 @@ class StripPrefixMiddleware:
 try:
     from app.main import app
     app.add_middleware(StripPrefixMiddleware)
+
+    from sqlalchemy import select, func
+    from app.database import async_session
+    from app.models import Category, Product, Seller
+    from app.config import settings
+
+    @app.get("/dbcheck")
+    async def db_check():
+        async with async_session() as session:
+            cat_count = (await session.execute(select(func.count(Category.id)))).scalar()
+            prod_count = (await session.execute(select(func.count(Product.id)))).scalar()
+            seller_count = (await session.execute(select(func.count(Seller.id)))).scalar()
+            return {
+                "database_url": settings.database_url,
+                "categories": cat_count,
+                "products": prod_count,
+                "sellers": seller_count,
+            }
+
 except Exception as e:
     tb = traceback.format_exc()
     app = FastAPI()
