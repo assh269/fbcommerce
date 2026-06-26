@@ -49,17 +49,26 @@ async def register_phone(message: Message, state: FSMContext):
 @router.message(RegisterStates.description)
 async def register_description(message: Message, state: FSMContext):
     data = await state.update_data(description=message.text)
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(
-            f"{settings.backend_url}/sellers",
-            json={
-                "telegram_id": message.from_user.id,
-                "username": message.from_user.username,
-                "business_name": data["business_name"],
-                "phone": data["phone"],
-                "description": data["description"],
-            },
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                f"{settings.backend_url}/sellers",
+                json={
+                    "telegram_id": message.from_user.id,
+                    "username": message.from_user.username,
+                    "business_name": data["business_name"],
+                    "phone": data["phone"],
+                    "description": data["description"],
+                },
+                timeout=15,
+            )
+    except Exception:
+        await message.answer(
+            "❌ Service unavailable. Registration failed.\nPlease try again with /start",
+            reply_markup=main_menu_keyboard(),
         )
+        await state.clear()
+        return
     if resp.status_code == 201:
         await message.answer(
             "✅ <b>Shop registered successfully!</b>\n\n"

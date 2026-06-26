@@ -24,12 +24,17 @@ async def add_to_cart(callback: CallbackQuery):
     user_id = callback.from_user.id
     prod_id = callback.data.replace("addcart_", "")
 
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(f"{settings.backend_url}/products/{prod_id}")
-        if resp.status_code != 200:
-            await callback.answer("Product not available", show_alert=True)
-            return
-        product = resp.json()
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(f"{settings.backend_url}/products/{prod_id}", timeout=15)
+    except Exception:
+        await callback.answer("Service unavailable. Try again later.", show_alert=True)
+        return
+
+    if resp.status_code != 200:
+        await callback.answer("Product not available", show_alert=True)
+        return
+    product = resp.json()
 
     if user_id not in user_carts:
         user_carts[user_id] = []
@@ -129,10 +134,15 @@ async def place_order(message: Message, state: FSMContext, data: dict):
 
     seller_id = items[0].get("seller_id")
     if not seller_id:
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(f"{settings.backend_url}/products/{items[0]['product_id']}")
-            if resp.status_code == 200:
-                seller_id = resp.json()["seller_id"]
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(f"{settings.backend_url}/products/{items[0]['product_id']}", timeout=15)
+                if resp.status_code == 200:
+                    seller_id = resp.json()["seller_id"]
+        except Exception:
+            await message.answer("❌ Could not retrieve product info. Try again later.")
+            await state.clear()
+            return
 
     payload = {
         "seller_id": seller_id,
@@ -145,8 +155,13 @@ async def place_order(message: Message, state: FSMContext, data: dict):
         "items": [{"product_id": i["product_id"], "quantity": i["quantity"], "price": i["price"]} for i in items],
     }
 
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(f"{settings.backend_url}/orders", json=payload)
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(f"{settings.backend_url}/orders", json=payload, timeout=15)
+    except Exception:
+        await message.answer("❌ Service unavailable. Please try again later.")
+        await state.clear()
+        return
 
     if resp.status_code == 201:
         order = resp.json()

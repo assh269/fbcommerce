@@ -12,8 +12,18 @@ router = Router()
 async def my_orders(callback: CallbackQuery):
     user_id = callback.from_user.id
 
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(f"{settings.backend_url}/orders?buyer_tg_id={user_id}")
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(f"{settings.backend_url}/orders?buyer_tg_id={user_id}", timeout=15)
+    except Exception:
+        await callback.message.edit_text(
+            "❌ Service unavailable. Please try again later.",
+            reply_markup=InlineKeyboardBuilder()
+            .button(text="🔙 Back", callback_data="back_main")
+            .as_markup(),
+        )
+        await callback.answer()
+        return
 
     if resp.status_code != 200 or not resp.json():
         await callback.message.edit_text(
@@ -44,8 +54,12 @@ async def my_orders(callback: CallbackQuery):
 @router.callback_query(F.data.startswith("order_"))
 async def order_detail(callback: CallbackQuery):
     order_id = callback.data.replace("order_", "")
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(f"{settings.backend_url}/orders/{order_id}")
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(f"{settings.backend_url}/orders/{order_id}", timeout=15)
+    except Exception:
+        await callback.answer("Service unavailable. Try again later.", show_alert=True)
+        return
 
     if resp.status_code != 200:
         await callback.answer("Order not found", show_alert=True)
@@ -79,8 +93,18 @@ async def order_detail(callback: CallbackQuery):
 async def seller_orders(callback: CallbackQuery):
     user_id = callback.from_user.id
 
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(f"{settings.backend_url}/sellers/telegram/{user_id}")
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(f"{settings.backend_url}/sellers/telegram/{user_id}", timeout=15)
+    except Exception:
+        await callback.message.edit_text(
+            "❌ Service unavailable. Please try again later.",
+            reply_markup=InlineKeyboardBuilder()
+            .button(text="🔙 Back", callback_data="back_main")
+            .as_markup(),
+        )
+        await callback.answer()
+        return
 
     if resp.status_code != 200:
         await callback.message.edit_text(
@@ -94,8 +118,18 @@ async def seller_orders(callback: CallbackQuery):
         return
 
     seller = resp.json()
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(f"{settings.backend_url}/orders?seller_id={seller['id']}")
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(f"{settings.backend_url}/orders?seller_id={seller['id']}", timeout=15)
+    except Exception:
+        await callback.message.edit_text(
+            "❌ Service unavailable. Please try again later.",
+            reply_markup=InlineKeyboardBuilder()
+            .button(text="🔙 Back", callback_data="back_main")
+            .as_markup(),
+        )
+        await callback.answer()
+        return
 
     orders = resp.json() if resp.status_code == 200 else []
     if not orders:

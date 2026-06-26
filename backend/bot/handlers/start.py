@@ -1,6 +1,6 @@
-from aiogram import Router
+from aiogram import F, Router
 from aiogram.filters import CommandStart
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, Message
 
 from bot.keyboards.menu import main_menu_keyboard
 
@@ -17,3 +17,12 @@ async def cmd_start(message: Message):
         "Use the menu below to get started.",
         reply_markup=main_menu_keyboard(),
     )
+
+
+@router.callback_query(F.data == "back_main")
+async def back_main(callback: CallbackQuery):
+    await callback.message.edit_text(
+        "<b>Main Menu</b>\n\nChoose an option below:",
+        reply_markup=main_menu_keyboard(),
+    )
+    await callback.answer()

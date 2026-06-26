@@ -64,8 +64,13 @@ async def submit_review(message: Message, state: FSMContext, data: dict, comment
         "comment": comment,
     }
 
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(f"{settings.backend_url}/reviews", json=payload)
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(f"{settings.backend_url}/reviews", json=payload, timeout=15)
+    except Exception:
+        await message.answer("❌ Service unavailable. Failed to submit review.\nPlease try again later.")
+        await state.clear()
+        return
 
     if resp.status_code == 201:
         await message.answer(

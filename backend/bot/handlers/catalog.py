@@ -13,7 +13,7 @@ async def fetch_products(seller_id: int | None = None):
     if seller_id:
         url += f"?seller_id={seller_id}"
     async with httpx.AsyncClient() as client:
-        resp = await client.get(url)
+        resp = await client.get(url, timeout=15)
         return resp.json() if resp.status_code == 200 else []
 
 
@@ -33,9 +33,22 @@ def product_card(product: dict) -> str:
 
 @router.callback_query(F.data == "browse_products")
 async def browse_categories(callback: CallbackQuery):
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(f"{settings.backend_url}/categories")
-        categories = resp.json() if resp.status_code == 200 else []
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(f"{settings.backend_url}/categories", timeout=15)
+            categories = resp.json() if resp.status_code == 200 else []
+    except Exception:
+        categories = []
+
+    if not categories:
+        await callback.message.edit_text(
+            "No categories available right now. Try again later.",
+            reply_markup=InlineKeyboardBuilder()
+            .button(text="🔙 Back", callback_data="back_main")
+            .as_markup(),
+        )
+        await callback.answer()
+        return
 
     builder = InlineKeyboardBuilder()
     for cat in categories:
@@ -54,7 +67,11 @@ async def browse_categories(callback: CallbackQuery):
 @router.callback_query(F.data.startswith("cat_"))
 async def list_products(callback: CallbackQuery):
     cat_id = callback.data.replace("cat_", "")
-    products = await fetch_products()
+    try:
+        products = await fetch_products()
+    except Exception:
+        products = []
+
     if cat_id != "all":
         products = [p for p in products if str(p.get("category_id", "")) == cat_id]
 
@@ -84,12 +101,17 @@ async def list_products(callback: CallbackQuery):
 @router.callback_query(F.data.startswith("prod_"))
 async def product_detail(callback: CallbackQuery):
     prod_id = callback.data.replace("prod_", "")
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(f"{settings.backend_url}/products/{prod_id}")
-        if resp.status_code != 200:
-            await callback.answer("Product not found", show_alert=True)
-            return
-        product = resp.json()
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(f"{settings.backend_url}/products/{prod_id}", timeout=15)
+    except Exception:
+        await callback.answer("Service unavailable. Try again later.", show_alert=True)
+        return
+
+    if resp.status_code != 200:
+        await callback.answer("Product not found", show_alert=True)
+        return
+    product = resp.json()
 
     builder = InlineKeyboardBuilder()
     builder.button(text="Add to Cart 🛒", callback_data=f"addcart_{prod_id}")
