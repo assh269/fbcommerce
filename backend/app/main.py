@@ -32,8 +32,7 @@ async def lifespan(app: FastAPI):
         webhook_url = f"{settings.backend_url}/api/webhook"
         await bot.set_webhook(url=webhook_url)
     yield
-    if bot:
-        await bot.session.close()
+    # Don't close bot session — it's reused across invocations on warm instances
 
 
 app = FastAPI(title="fbtiktokcommerce", version="0.1.0", lifespan=lifespan)
@@ -62,6 +61,12 @@ async def health():
 async def telegram_webhook(request: Request):
     if not bot or not dp:
         return {"ok": False, "error": "Bot not initialized"}
-    update = Update.model_validate(await request.json())
-    await dp.feed_update(bot, update)
-    return {"ok": True}
+    try:
+        body = await request.json()
+        update = Update.model_validate(body)
+        await dp.feed_update(bot, update)
+        return {"ok": True}
+    except Exception as e:
+        import traceback
+        print(f"Webhook error: {e}\n{traceback.format_exc()}")
+        return {"ok": False, "error": str(e)}
