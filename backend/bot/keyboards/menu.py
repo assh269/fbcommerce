@@ -1,6 +1,8 @@
 from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from app.config import settings
+
 
 def main_menu_keyboard():
     builder = InlineKeyboardBuilder()
@@ -9,6 +11,6 @@ def main_menu_keyboard():
     builder.button(text="My Orders", callback_data="my_orders")
     builder.button(text="Register as Seller", callback_data="register_seller")
     builder.button(text="Seller Dashboard", callback_data="seller_orders")
-    builder.button(text="Open Web Dashboard 🌐", url="http://localhost:5173")
+    builder.button(text="Open Web Dashboard 🌐", url=settings.frontend_url)
     builder.adjust(2)
     return builder.as_markup()
