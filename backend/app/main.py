@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
         dp.include_routers(
             start.router, register.router, catalog.router, cart.router, bot_orders.router,
         )
-        webhook_url = f"{settings.backend_url}/webhook"
+        webhook_url = f"{settings.backend_url}/api/webhook"
         await bot.set_webhook(url=webhook_url)
     yield
     if bot:
