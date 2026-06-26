@@ -9,7 +9,7 @@ from app.database import Base
 
 
 def _now():
-    return datetime.now(timezone.utc)
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class Order(Base):
