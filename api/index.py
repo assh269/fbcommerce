@@ -4,6 +4,19 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "backend"))
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+
+app = FastAPI()
+
+
+@app.get("/ping2")
+async def ping2():
+    return {"status": "alive"}
+
+
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent / "backend"))
+
 from starlette.types import ASGIApp, Scope, Receive, Send
 
 
@@ -39,10 +52,8 @@ except Exception:
     import traceback
     tb = traceback.format_exc()
 
-    app = FastAPI()
-
-    @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
-    async def catch_all(path: str):
+    @app.exception_handler(Exception)
+    async def catch_all(request, exc):
         return JSONResponse(
             status_code=500,
             content={"error": "Import failed", "traceback": tb.splitlines()},
