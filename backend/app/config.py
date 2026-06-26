@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     wave_money_api_key: str = ""
 
     class Config:
-        env_file = "../.env"
+        env_file = ".env"
         extra = "ignore"
 
     def __init__(self, **kwargs):
