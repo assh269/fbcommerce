@@ -13,7 +13,7 @@ export default function Landing() {
             Seller Dashboard
           </Link>
           <a
-            href="https://t.me/your_bot_username"
+            href="https://t.me/krkr_minmin_bot"
             target="_blank"
             rel="noopener noreferrer"
             className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg shadow-sm hover:bg-primary-700"
@@ -33,7 +33,7 @@ export default function Landing() {
         </p>
         <div className="flex justify-center gap-4">
           <a
-            href="https://t.me/your_bot_username"
+            href="https://t.me/krkr_minmin_bot"
             target="_blank"
             rel="noopener noreferrer"
             className="px-8 py-3 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700"
