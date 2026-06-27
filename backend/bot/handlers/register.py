@@ -28,7 +28,11 @@ async def register_start(callback: CallbackQuery, state: FSMContext):
 
 @router.message(RegisterStates.business_name)
 async def register_business_name(message: Message, state: FSMContext):
-    await state.update_data(business_name=message.text)
+    name = message.text.strip() if message.text else ""
+    if not name or len(name) < 2:
+        await message.answer("Please enter a valid business name (at least 2 characters):")
+        return
+    await state.update_data(business_name=name)
     await message.answer(
         "Step 2/3: What is your <b>phone number</b>?\n"
         "(Buyers will use this to contact you)"
@@ -38,7 +42,11 @@ async def register_business_name(message: Message, state: FSMContext):
 
 @router.message(RegisterStates.phone)
 async def register_phone(message: Message, state: FSMContext):
-    await state.update_data(phone=message.text)
+    phone = message.text.strip() if message.text else ""
+    if not phone or len(phone) < 5:
+        await message.answer("Please enter a valid phone number (at least 5 digits):")
+        return
+    await state.update_data(phone=phone)
     await message.answer(
         "Step 3/3: Tell us about your shop 📝\n"
         "(What do you sell? Any special notes for buyers?)"
@@ -48,7 +56,11 @@ async def register_phone(message: Message, state: FSMContext):
 
 @router.message(RegisterStates.description)
 async def register_description(message: Message, state: FSMContext):
-    data = await state.update_data(description=message.text)
+    desc = message.text.strip() if message.text else ""
+    if not desc or len(desc) < 5:
+        await message.answer("Please enter a shop description (at least 5 characters):")
+        return
+    data = await state.update_data(description=desc)
     try:
         async with httpx.AsyncClient() as client:
             resp = await client.post(
@@ -69,21 +81,26 @@ async def register_description(message: Message, state: FSMContext):
         )
         await state.clear()
         return
+
     if resp.status_code == 201:
         await message.answer(
             "✅ <b>Shop registered successfully!</b>\n\n"
             f"🏪 {data['business_name']}\n"
             f"📞 {data['phone']}\n\n"
             "You can now:\n"
-            "• Add products via /addproduct\n"
-            "• View orders via /myorders\n"
+            "• View and manage orders via the menu below\n"
+            "• Receive notifications when buyers place orders\n"
             "• Manage your catalog in the web dashboard",
             reply_markup=main_menu_keyboard(),
         )
     else:
-        err = resp.json()
+        try:
+            err = resp.json()
+            err_msg = err.get("detail", "Unknown error")
+        except Exception:
+            err_msg = resp.text
         await message.answer(
-            f"❌ Registration failed: {err.get('detail', 'Unknown error')}\n"
+            f"❌ Registration failed: {err_msg}\n"
             "Try again with /start",
             reply_markup=main_menu_keyboard(),
         )

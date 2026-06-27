@@ -6,6 +6,7 @@ from aiogram.types import CallbackQuery, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from app.config import settings
+from bot.handlers.orders import review_tokens
 
 router = Router()
 
@@ -15,16 +16,20 @@ class ReviewStates(StatesGroup):
     comment = State()
 
 
-@router.callback_query(F.data.startswith("review_"))
+@router.callback_query(F.data.startswith("rev_"))
 async def review_start(callback: CallbackQuery, state: FSMContext):
-    parts = callback.data.split("_")
-    product_id, order_id = parts[1], parts[2]
+    token = callback.data.replace("rev_", "")
+    ids = review_tokens.get(token)
+    if not ids:
+        await callback.answer("This review link has expired. Please go back and try again.", show_alert=True)
+        return
+    product_id, order_id = ids
     await state.update_data(product_id=product_id, order_id=order_id)
 
     builder = InlineKeyboardBuilder()
     for star in range(1, 6):
         label = "⭐" * star
-        builder.button(text=label, callback_data=f"stars_{star}")
+        builder.button(text=label, callback_data="stars_" + str(star))
     builder.button(text="🔙 Cancel", callback_data="my_orders")
     builder.adjust(5)
 
@@ -36,7 +41,7 @@ async def review_start(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@router.callback_query(F.data.startswith("stars_"))
+@router.callback_query(ReviewStates.rating, F.data.startswith("stars_"))
 async def review_rating(callback: CallbackQuery, state: FSMContext):
     rating = int(callback.data.replace("stars_", ""))
     await state.update_data(rating=rating)
@@ -51,17 +56,19 @@ async def review_rating(callback: CallbackQuery, state: FSMContext):
 @router.message(ReviewStates.comment)
 async def review_comment(message: Message, state: FSMContext):
     data = await state.get_data()
-    comment = message.text if message.text != "/skip" else None
+    comment = message.text.strip() if message.text else ""
+    if comment.lower() == "/skip":
+        comment = ""
     await submit_review(message, state, data, comment)
 
 
-async def submit_review(message: Message, state: FSMContext, data: dict, comment: str | None):
+async def submit_review(message: Message, state: FSMContext, data: dict, comment: str):
     payload = {
         "product_id": data["product_id"],
         "order_id": data["order_id"],
         "buyer_telegram_id": message.from_user.id,
         "rating": data["rating"],
-        "comment": comment,
+        "comment": comment or None,
     }
 
     try:
@@ -80,6 +87,10 @@ async def submit_review(message: Message, state: FSMContext, data: dict, comment
             "Thank you for your feedback!"
         )
     else:
-        await message.answer("❌ Failed to submit review. Please try again later.")
+        try:
+            err = resp.json()
+        except Exception:
+            err = resp.text
+        await message.answer(f"❌ Failed to submit review: {err}")
 
     await state.clear()

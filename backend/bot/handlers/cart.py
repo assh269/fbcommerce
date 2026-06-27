@@ -38,11 +38,21 @@ async def add_to_cart(callback: CallbackQuery):
 
     if user_id not in user_carts:
         user_carts[user_id] = []
-    user_carts[user_id].append(
-        {"product_id": product["id"], "name": product["name"], "price": product["price"], "quantity": 1}
-    )
 
-    await callback.answer(f"✅ Added: {product['name']}", show_alert=True)
+    existing = next((i for i, item in enumerate(user_carts[user_id])
+                     if item["product_id"] == product["id"]), None)
+    if existing is not None:
+        user_carts[user_id][existing]["quantity"] += 1
+        await callback.answer(f"✅ {product.get('name', 'Item')} quantity increased to {user_carts[user_id][existing]['quantity']}!", show_alert=True)
+    else:
+        user_carts[user_id].append({
+            "product_id": product["id"],
+            "name": product.get("name", "Item"),
+            "price": product.get("price", 0),
+            "quantity": 1,
+            "seller_id": product.get("seller_id"),
+        })
+        await callback.answer(f"✅ Added: {product.get('name', 'Item')}", show_alert=True)
 
 
 @router.callback_query(F.data == "view_cart")
@@ -100,21 +110,33 @@ async def checkout_start(callback: CallbackQuery, state: FSMContext):
 
 @router.message(CheckoutStates.name)
 async def checkout_name(message: Message, state: FSMContext):
-    await state.update_data(name=message.text)
+    name = message.text.strip()
+    if not name:
+        await message.answer("Please enter a valid name:")
+        return
+    await state.update_data(name=name)
     await message.answer("Step 2/4: What is your <b>phone number</b>?")
     await state.set_state(CheckoutStates.phone)
 
 
 @router.message(CheckoutStates.phone)
 async def checkout_phone(message: Message, state: FSMContext):
-    await state.update_data(phone=message.text)
+    phone = message.text.strip()
+    if not phone:
+        await message.answer("Please enter a valid phone number:")
+        return
+    await state.update_data(phone=phone)
     await message.answer("Step 3/4: What is your <b>shipping address</b>?")
     await state.set_state(CheckoutStates.address)
 
 
 @router.message(CheckoutStates.address)
 async def checkout_address(message: Message, state: FSMContext):
-    await state.update_data(address=message.text)
+    address = message.text.strip()
+    if not address:
+        await message.answer("Please enter a valid address:")
+        return
+    await state.update_data(address=address)
     await message.answer(
         "Step 4/4: Any <b>notes</b> for the seller?\n"
         "(Send /skip if none)"
@@ -124,7 +146,9 @@ async def checkout_address(message: Message, state: FSMContext):
 
 @router.message(CheckoutStates.note)
 async def checkout_finish(message: Message, state: FSMContext):
-    data = await state.update_data(note=message.text if message.text != "/skip" else "")
+    text = message.text.strip() if message.text else ""
+    note = text if text.lower() != "/skip" else ""
+    data = await state.update_data(note=note)
     await place_order(message, state, data)
 
 
@@ -164,13 +188,19 @@ async def place_order(message: Message, state: FSMContext, data: dict):
         return
 
     if resp.status_code == 201:
-        order = resp.json()
+        try:
+            order = resp.json()
+        except Exception:
+            order = {}
         user_carts.pop(user_id, None)
+        order_id_str = str(order.get("id", ""))[:8]
+        total_str = f"{order.get('total', 0):,.0f}" if isinstance(order.get("total"), (int, float)) else str(order.get("total", "?"))
+        status_str = order.get("status", "pending")
         await message.answer(
             f"✅ <b>Order placed!</b>\n\n"
-            f"🆔 Order ID: <code>{order['id'][:8]}...</code>\n"
-            f"💰 Total: {order['total']:,.0f} MMK\n"
-            f"📦 Status: <b>{order['status']}</b>\n\n"
+            f"🆔 Order ID: <code>{order_id_str}...</code>\n"
+            f"💰 Total: {total_str} MMK\n"
+            f"📦 Status: <b>{status_str}</b>\n\n"
             "The seller will contact you soon!",
         )
         try:
@@ -179,6 +209,10 @@ async def place_order(message: Message, state: FSMContext, data: dict):
         except Exception:
             pass
     else:
-        await message.answer("❌ Order failed. Please try again later.")
+        try:
+            err_detail = resp.json()
+        except Exception:
+            err_detail = resp.text
+        await message.answer(f"❌ Order failed: {err_detail}")
 
     await state.clear()
